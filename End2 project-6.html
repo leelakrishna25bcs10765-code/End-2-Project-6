@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Touch to Score</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      height: 100vh;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    .game {
+      width: 380px;
+      padding: 20px;
+      border-radius: 15px;
+      background: black;
+      border: 2px solid cyan;
+      box-shadow: 0 0 20px cyan;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    h1 {
+      margin: 10px 0;
+      color: cyan;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .bar {
+      height: 8px;
+      background: gray;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 100%;
+      background: lime;
+      transition: width 0.1s linear;
+    }
+    #target {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: cyan;
+      color: black;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    #target:active {
+      transform: scale(0.9);
+    }
+    .btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: cyan;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: black;
+    }
+    .btn:hover {
+      background: lime;
+    }
+    .screen {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+    #congratsMsg {
+      color: lime;
+      font-weight: bold;
+      margin-top: 10px;
+      animation: pop 0.5s ease;
+    }
+    @keyframes pop {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game">
+    <h1>Touch to Score</h1>
+    <div class="hud">
+      <div>Level: <span id="level">1</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div>High: <span id="highScore">0</span></div>
+    </div>
+    <div class="bar">
+      <div id="timeBar" class="bar-fill"></div>
+    </div>
+    <button id="target" class="hidden">+1</button>
+
+    <div id="startScreen" class="screen">
+      <p>Touch the moving circle before time runs out.</p>
+      <button class="btn" onclick="startGame()">Start Game</button>
+    </div>
+    <div id="gameOverScreen" class="screen hidden">
+      <p>Game Over</p>
+      <p>Final Score: <strong id="finalScore"></strong></p>
+      <p id="congratsMsg" class="hidden">Congratulations! New High Score!</p>
+      <button class="btn" onclick="startGame()">Play Again</button>
+    </div>
+  </div>
+  <script>
+    let score = 0;
+    let level = 1;
+    let timeLeft = 100;
+    let moveSpeed = 1000;
+    let timer, mover;
+    const target = document.getElementById("target");
+    const scoreEl = document.getElementById("score");
+    const levelEl = document.getElementById("level");
+    const timeBar = document.getElementById("timeBar");
+    const highScoreEl = document.getElementById("highScore");
+    const finalScoreEl = document.getElementById("finalScore");
+    const startScreen = document.getElementById("startScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const congratsMsg = document.getElementById("congratsMsg");
+    let highScore = localStorage.getItem("clickRushHigh") || 0;
+    highScoreEl.textContent = highScore;
+    function startGame() {
+      clearInterval(timer);
+      clearInterval(mover);
+      score = 0;
+      level = 1;
+      timeLeft = 100;
+      moveSpeed = 1200;
+      scoreEl.textContent = score;
+      levelEl.textContent = level;
+      timeBar.style.width = "100%";
+      congratsMsg.classList.add("hidden");
+      startScreen.classList.add("hidden");
+      gameOverScreen.classList.add("hidden");
+      target.classList.remove("hidden");
+      moveTarget();
+      startTimers();
+    }
+    function startTimers() {
+      timer = setInterval(() => {
+        timeLeft--;
+        timeBar.style.width = timeLeft + "%";
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 100);
+      mover = setInterval(moveTarget, moveSpeed);
+    }
+    function moveTarget() {
+      const game = document.querySelector(".game");
+      const maxX = game.clientWidth - 80;
+      const maxY = game.clientHeight - 80;
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      target.style.left = x + "px";
+      target.style.top = y + "px";
+    }
+    target.addEventListener("click", () => {
+      score++;
+      scoreEl.textContent = score;
+
+      if (score % 10 === 0) {
+        level++;
+        levelEl.textContent = level;
+        moveSpeed = Math.max(400, moveSpeed - 150);
+        clearInterval(mover);
+        mover = setInterval(moveTarget, moveSpeed);
+      }
+    });
+    function endGame() {
+      clearInterval(timer);
+      clearInterval(mover);
+      target.classList.add("hidden");
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("clickRushHigh", highScore);
+        highScoreEl.textContent = highScore;
+        congratsMsg.classList.remove("hidden");
+      }
+      finalScoreEl.textContent = score;
+      gameOverScreen.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
